@@ -1,0 +1,33 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare project
+        run: |
+          if [ -f DynamicIsland.zip ]; then unzip -q -o DynamicIsland.zip; fi
+          if [ -d DynamicIsland/app ]; then echo "PROJ=DynamicIsland" >> $GITHUB_ENV; else echo "PROJ=." >> $GITHUB_ENV; fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+
+      - name: Build debug APK
+        run: gradle -p "$PROJ" :app:assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DynamicIsland-APK
+          path: ${{ env.PROJ }}/app/build/outputs/apk/debug/*.apk
